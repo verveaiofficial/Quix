@@ -1,10 +1,11 @@
-export type ModelId =
+export type ChatModelId =
   | "flash"
   | "lite"
   | "coder"
   | "thinking"
-  | "deepthink"
-  | "imagine";
+  | "deepthink";
+
+export type ModelId = ChatModelId | "imagine";
 
 export interface ModelConfig {
   id: ModelId;
@@ -13,6 +14,8 @@ export interface ModelConfig {
   type: "chat" | "iframe";
   iframeUrl?: string;
   thinking?: boolean;
+  geminiModel?: string;
+  apiKeyEnv?: string;
   tools?: {
     markdown?: boolean;
     code?: boolean;
@@ -29,6 +32,8 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     description: "Balanced intelligence for daily tasks",
     type: "chat",
     thinking: false,
+    geminiModel: "gemini-3.5-flash-lite",
+    apiKeyEnv: "VITE_GEMINI_FLASH_API_KEY",
     tools: {
       markdown: true,
     },
@@ -40,6 +45,8 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     description: "Instant replies",
     type: "chat",
     thinking: false,
+    geminiModel: "gemini-3.5-flash-lite",
+    apiKeyEnv: "VITE_GEMINI_LITE_API_KEY",
     tools: {
       markdown: true,
     },
@@ -51,6 +58,8 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     description: "Build apps and sites",
     type: "chat",
     thinking: false,
+    geminiModel: "gemini-3.5-flash-lite",
+    apiKeyEnv: "VITE_GEMINI_CODER_API_KEY",
     tools: {
       markdown: true,
       code: true,
@@ -64,6 +73,8 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     description: "Advanced reasoning & research",
     type: "chat",
     thinking: true,
+    geminiModel: "gemini-3.5-flash-lite",
+    apiKeyEnv: "VITE_GEMINI_THINKING_API_KEY",
     tools: {
       markdown: true,
       research: true,
@@ -77,6 +88,8 @@ export const MODELS: Record<ModelId, ModelConfig> = {
     description: "5-minute deep research & reasoning",
     type: "chat",
     thinking: true,
+    geminiModel: "gemini-3.5-flash-lite",
+    apiKeyEnv: "VITE_GEMINI_DEEPTHINK_API_KEY",
     tools: {
       markdown: true,
       research: true,
