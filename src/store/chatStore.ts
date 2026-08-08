@@ -24,18 +24,26 @@ interface ChatState {
   activeModel: ModelId;
   messages: ChatMessage[];
   isSending: boolean;
+  currentChatId: string | null;
+  chatTitle: string;
 
   setActiveModel: (model: ModelId) => void;
   addMessage: (message: ChatMessage) => void;
   updateMessage: (id: string, patch: Partial<ChatMessage>) => void;
   clearMessages: () => void;
   setIsSending: (sending: boolean) => void;
+  setCurrentChat: (id: string | null, title: string) => void;
+  setChatTitle: (title: string) => void;
+  loadMessages: (messages: ChatMessage[]) => void;
+  resetChat: () => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   activeModel: "flash",
   messages: [],
   isSending: false,
+  currentChatId: null,
+  chatTitle: "New Chat",
 
   setActiveModel: (model) => {
     set({ activeModel: model });
@@ -66,5 +74,28 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setIsSending: (sending) => {
     set({ isSending: sending });
+  },
+
+  setCurrentChat: (id, title) => {
+    set({
+      currentChatId: id,
+      chatTitle: title,
+    });
+  },
+
+  setChatTitle: (title) => {
+    set({ chatTitle: title });
+  },
+
+  loadMessages: (messages) => {
+    set({ messages });
+  },
+
+  resetChat: () => {
+    set({
+      messages: [],
+      currentChatId: null,
+      chatTitle: "New Chat",
+    });
   },
 }));
