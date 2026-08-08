@@ -1,19 +1,27 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import LoadingScreen from "./components/loading/LoadingScreen";
 import ChatHeader from "./components/layout/ChatHeader";
 import MenuDrawer from "./components/layout/MenuDrawer";
 import AuthScreen from "./components/layout/AuthScreen";
 import ChatInputBar from "./components/chat/ChatInputBar";
+import MessageList from "./components/chat/MessageList";
 import { useChatStore } from "./store/chatStore";
-import { MODELS } from "./config/models";
+import { MODELS, ChatModelId } from "./config/models";
+import { buildModelPrompt } from "./lib/prompt";
+import { askGemini } from "./lib/gemini";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
 
-  const { activeModel, messages, addMessage } = useChatStore();
-  const model = MODELS[activeModel];
+  const {
+    activeModel,
+    addMessage,
+    updateMessage,
+    isSending,
+    setIsSending,
+  } = useChatStore();
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const model = MODELS[activeModel];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -23,20 +31,66 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const handleSend = async (text: string) => {
+    if (isSending) return;
 
-  const handleSend = (text: string) => {
-    addMessage({
+    if (model.type !== "chat") return;
+
+    const chatModel = activeModel as ChatModelId;
+
+    const userMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      role: "user",
-      model: activeModel,
+      role: "user" as const,
+      model: chatModel,
       content: text,
       createdAt: Date.now(),
+      status: "done" as const,
+      kind: "text" as const,
+    };
+
+    const aiMessageId = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+    addMessage(userMessage);
+
+    addMessage({
+      id: aiMessageId,
+      role: "ai",
+      model: chatModel,
+      content: "",
+      createdAt: Date.now(),
+      status: "thinking",
+      kind: "text",
     });
+
+    setIsSending(true);
+
+    try {
+      const history = useChatStore
+        .getState()
+        .messages.filter(
+          (message) =>
+            message.id !== aiMessageId && message.content.trim() !== ""
+        );
+
+      const prompt = buildModelPrompt(chatModel, text, history);
+
+      const answer = await askGemini(chatModel, prompt);
+
+      updateMessage(aiMessageId, {
+        content: answer,
+        status: "streaming",
+      });
+    } catch {
+      updateMessage(aiMessageId, {
+        content:
+          "Quix could not reach the model. Check the API key for this model and try again.",
+        status: "error",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (loading) {
@@ -83,55 +137,7 @@ export default function App() {
         </div>
       ) : (
         <>
-          <div
-            ref={scrollRef}
-            style={{
-              position: "fixed",
-              top: 56,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: "auto",
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                maxWidth: 650,
-                margin: "0 auto",
-                padding: "24px 20px 140px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {messages.map((message) => {
-                if (message.role === "user") {
-                  return (
-                    <div
-                      key={message.id}
-                      style={{
-                        alignSelf: "flex-end",
-                        maxWidth: "85%",
-                        background: "#1e1e20",
-                        color: "#fff",
-                        padding: "12px 16px",
-                        borderRadius: "18px 18px 4px 18px",
-                        fontSize: 15,
-                        lineHeight: 1.5,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        marginBottom: 24,
-                      }}
-                    >
-                      {message.content}
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-          </div>
+          <MessageList />
 
           <ChatInputBar onSend={handleSend} />
         </>
