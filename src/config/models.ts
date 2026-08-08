@@ -4,7 +4,7 @@
     description: "Balanced intelligence for daily tasks",
     type: "chat",
     thinking: false,
-    geminiModel: "gemini-1.5-flash", // <-- CHANGE THIS
+    geminiModel: "gemini-3.5-flash-lite", // <-- CHANGE THIS
     apiKeyEnv: "VITE_GEMINI_FLASH_API_KEY",
     tools: { markdown: true },
   },
