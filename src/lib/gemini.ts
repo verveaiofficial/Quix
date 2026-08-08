@@ -43,7 +43,17 @@ export async function askGemini(
     }
   );
 
+  if (!response.ok) {
+    throw new Error("Gemini request failed");
+  }
+
   const data = await response.json();
 
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+
+  if (!text) {
+    throw new Error("Empty Gemini response");
+  }
+
+  return text;
 }
