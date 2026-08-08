@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import BubbleIndicator from "./BubbleIndicator";
+import ThinkingStatus from "../thinking/ThinkingStatus";
+import { MarkdownText } from "../../lib/markdown";
 import { useStreamText } from "../../hooks/useStreamText";
 import { useChatStore, ChatMessage } from "../../store/chatStore";
 
@@ -14,9 +16,12 @@ export default function AiMessage({ message }: AiMessageProps) {
 
   const shown = useStreamText(message.content, shouldStream, 16);
 
-  const displayed = shouldStream ? shown : message.content;
-
   const isDone = message.status === "done" || message.status === "error";
+
+  const isThinkingModel =
+    message.model === "thinking" || message.model === "deepthink";
+
+  const isCoder = message.model === "coder";
 
   useEffect(() => {
     if (!shouldStream) return;
@@ -41,7 +46,14 @@ export default function AiMessage({ message }: AiMessageProps) {
   return (
     <div className="message-ai">
       <div className="ai-content">
-        <BubbleIndicator dimmed={isDone} />
+        {isThinkingModel ? (
+          <ThinkingStatus
+            done={message.status !== "thinking"}
+            deep={message.model === "deepthink"}
+          />
+        ) : (
+          <BubbleIndicator dimmed={isDone} />
+        )}
 
         <div
           style={{
@@ -49,7 +61,7 @@ export default function AiMessage({ message }: AiMessageProps) {
             maxWidth: 640,
           }}
         >
-          {message.status === "thinking" && (
+          {message.status === "thinking" && !isThinkingModel && (
             <p
               className="typing-text"
               style={{
@@ -60,15 +72,28 @@ export default function AiMessage({ message }: AiMessageProps) {
             </p>
           )}
 
-          {(message.status === "streaming" ||
-            message.status === "done" ||
-            message.status === "error") && (
+          {shouldStream && (
             <p className="typing-text">
-              {displayed}
+              {shown}
 
-              {shouldStream && shown.length < message.content.length && (
+              {shown.length < message.content.length && (
                 <span className="stream-cursor" />
               )}
+            </p>
+          )}
+
+          {message.status === "done" && (
+            <MarkdownText text={message.content} enablePreview={isCoder} />
+          )}
+
+          {message.status === "error" && (
+            <p
+              className="typing-text"
+              style={{
+                color: "#ff8080",
+              }}
+            >
+              {message.content}
             </p>
           )}
         </div>
