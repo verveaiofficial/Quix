@@ -1,4 +1,5 @@
-import { MODELS, ChatModelId } from "../config/models";
+const GEMINI_MODEL =
+  import.meta.env.VITE_GEMINI_MODEL || "gemini-3.5-flash-lite"; { MODELS, ChatModelId } from "../config/models";
 
 const FALLBACK_MODEL = "gemini-3.5-flash-lite";
 
